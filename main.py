@@ -5,7 +5,7 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 import torch
 import wandb
-from src.utils import eval_model
+from src.utils import train_one_epoch, eval_model, save_model
 
 torch.manual_seed(0)
 wandb.init(project='SberCVDS',
@@ -20,7 +20,7 @@ device = torch.device('cuda')
 train_dataset = ImageWoofDataset('train')
 val_dataset = ImageWoofDataset('val')
 traindata = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-valdata = DataLoader(val_dataset, batch_size=15, shuffle=False)
+valdata = DataLoader(val_dataset, batch_size=50, shuffle=False)
 
 model = EfficientNet.from_pretrained(config.eff_model_name, num_classes=10).to(device)
 optimizer = Adam(model.parameters(), lr=config.lr)
@@ -29,20 +29,7 @@ criterion = CrossEntropyLoss()
 step = 0
 eval_model(model, valdata, step)
 for epoch in range(config.epochs):
-    model.train()
-    for batch_num, (batch, labels) in enumerate(traindata):
-        step += 1
-        batch = batch.to(device)
-        labels = labels.to(device)
-
-        optimizer.zero_grad()
-        outputs = model(batch)
-        loss = criterion(outputs, labels)
-
-        loss.backward()
-        optimizer.step()
-
-        wandb.log({'loss': loss.item(), 'epoch': epoch + batch_num / len(traindata)}, step=step)
-
+    step = train_one_epoch(model, optimizer, criterion, epoch, step, traindata)
     eval_model(model, valdata, step)
+    save_model(model)
 wandb.finish()
