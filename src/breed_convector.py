@@ -13,11 +13,11 @@ class BreedConvector:
         self.index_to_breed = {0: 'Shih-Tzu',
                                1: 'Rhodesian ridgeback',
                                2: 'Beagle',
-                               3: 'English foxhound,',
+                               3: 'English foxhound',
                                4: 'Border terrier',
                                5: 'Australian terrier',
                                6: 'Golden retriever',
-                               7: 'Old English sheepdog.',
+                               7: 'Old English sheepdog',
                                8: 'Samoyed',
                                9: 'Dingo'}
 

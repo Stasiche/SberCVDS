@@ -42,7 +42,7 @@ def save_model(model):
 
 
 def restore_model(model, run_name):
-    local_model_path = join('..', 'tmp', 'model.pt')
+    local_model_path = join('..', 'models', 'model.pt')
 
     if not exists(local_model_path):
         wandb.restore('model.pt', f'stasiche/SberCVDS/{run_name}', root=dirname(local_model_path))
