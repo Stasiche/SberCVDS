@@ -1,6 +1,6 @@
 import torch
 import wandb
-from os.path import join, exists, dirname
+from os.path import join
 
 
 def train_one_epoch(model, optimizer, criterion, epoch, step, traindata):
@@ -39,11 +39,3 @@ def eval_model(model, valdata, step):
 def save_model(model):
     torch.save(model.state_dict(), join(wandb.run.dir, 'model.pt'))
     wandb.save(join(wandb.run.dir, 'model.pt'))
-
-
-def restore_model(model, run_name):
-    local_model_path = join('..', 'models', 'model.pt')
-
-    if not exists(local_model_path):
-        wandb.restore('model.pt', f'stasiche/SberCVDS/{run_name}', root=dirname(local_model_path))
-    model.load_state_dict(torch.load(local_model_path))
