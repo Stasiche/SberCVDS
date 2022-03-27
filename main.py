@@ -1,35 +1,49 @@
-from src.dataset import ImageWoofDataset
-from torch.utils.data import DataLoader
-from efficientnet_pytorch import EfficientNet
-from torch.nn import CrossEntropyLoss
-from torch.optim import Adam
+import logging
+import os
+from functools import partial
+
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
+
 import torch
-import wandb
-from src.utils import train_one_epoch, eval_model, save_model
+from torch import nn
 
-torch.manual_seed(0)
-wandb.init(project='SberCVDS',
-           config={
-               'batch_size': 15,
-               'lr': 1e-4,
-               'eff_model_name': 'efficientnet-b0',
-               'epochs': 10,
-           })
-config = wandb.config
-device = torch.device('cuda')
-train_dataset = ImageWoofDataset('train')
-val_dataset = ImageWoofDataset('val')
-traindata = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-valdata = DataLoader(val_dataset, batch_size=50, shuffle=False)
+from efficientnet_pytorch import EfficientNet
+from src.breed_convector import BreedConvector
+from src.handlers_functions import recognize_document, recognize_image, help
+from os.path import join
 
-model = EfficientNet.from_pretrained(config.eff_model_name, num_classes=10).to(device)
-optimizer = Adam(model.parameters(), lr=config.lr)
-criterion = CrossEntropyLoss()
+TOKEN = os.environ.get('TOKEN')
 
-step = 0
-eval_model(model, valdata, step)
-for epoch in range(config.epochs):
-    step = train_one_epoch(model, optimizer, criterion, epoch, step, traindata)
-    eval_model(model, valdata, step)
-    save_model(model)
-wandb.finish()
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+
+def main(model: nn.Module, convector: BreedConvector) -> None:
+    updater = Updater(TOKEN)
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(MessageHandler(~(Filters.command & Filters.photo) & ~Filters.document,
+                                          partial(recognize_image, model=model, convector=convector)))
+
+    dispatcher.add_handler(MessageHandler(~(Filters.command & Filters.document),
+                                          partial(recognize_document, model=model, convector=convector)))
+
+    dispatcher.add_handler(CommandHandler('help', help))
+    updater.start_polling()
+    updater.idle()
+
+
+if __name__ == '__main__':
+    try:
+        local_model_path = join('src', 'models', 'model.pt')
+        model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=10)
+        model.load_state_dict(torch.load(local_model_path, map_location=torch.device('cpu')))
+        model.to('cpu')
+        model.eval()
+        convector = BreedConvector()
+    except Exception as e:
+        logger.error(str(e))
+
+    main(model, convector)

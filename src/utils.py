@@ -1,49 +1,30 @@
+from telegram import Update
+from telegram.ext import CallbackContext
+from PIL import Image
+import io
+from torchvision.transforms import Compose, Resize, ToTensor, Normalize
+import logging
 import torch
-import wandb
-from os.path import join, exists, dirname
+from torch import nn
+from src.breed_convector import BreedConvector
+
+logger = logging.getLogger(__name__)
 
 
-def train_one_epoch(model, optimizer, criterion, epoch, step, traindata):
-    device = next(model.parameters()).device
-    model.train()
-    for batch_num, (batch, labels) in enumerate(traindata):
-        step += 1
-        batch = batch.to(device)
-        labels = labels.to(device)
+def recognize(update: Update, context: CallbackContext, model: nn.Module, convector: BreedConvector, img):
+    try:
+        device = next(model.parameters()).device
+        trans = Compose([Resize((256, 256)),
+                         ToTensor(),
+                         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                         ])
 
-        optimizer.zero_grad()
-        outputs = model(batch)
-        loss = criterion(outputs, labels)
-
-        loss.backward()
-        optimizer.step()
-
-        wandb.log({'loss': loss.item(), 'epoch': epoch + batch_num / len(traindata)}, step=step)
-    return step
-
-
-@torch.no_grad()
-def eval_model(model, valdata, step):
-    device = next(model.parameters()).device
-    model.eval()
-    acc = 0
-    for batch_num, (batch, labels) in enumerate(valdata):
-        batch = batch.to(device)
-        labels = labels.to(device)
-
-        predict = torch.argmax(model(batch), dim=1)
-        acc += sum(labels == predict).item()
-    wandb.log({'accuracy': acc / len(valdata.dataset)}, step=step)
-
-
-def save_model(model):
-    torch.save(model.state_dict(), join(wandb.run.dir, 'model.pt'))
-    wandb.save(join(wandb.run.dir, 'model.pt'))
-
-
-def restore_model(model, run_name):
-    local_model_path = join('..', 'models', 'model.pt')
-
-    if not exists(local_model_path):
-        wandb.restore('model.pt', f'stasiche/SberCVDS/{run_name}', root=dirname(local_model_path))
-    model.load_state_dict(torch.load(local_model_path))
+        image = Image.open(io.BytesIO(img))
+        image = image.convert('RGB')
+        image = trans(image)
+        prediction_cls = torch.argmax(model(image.to(device).unsqueeze(0)), dim=1).item()
+        update.message.reply_text("It's a " + convector.index_to_breed[prediction_cls])
+    except Exception as e:
+        logger.error('Error: ' + str(e) +
+                     '\nContext: ' + str(context) +
+                     '\nUpdate: ' + str(update))
