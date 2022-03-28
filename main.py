@@ -24,10 +24,10 @@ def main(model: nn.Module, convector: BreedConvector) -> None:
     updater = Updater(TOKEN)
     dispatcher = updater.dispatcher
 
-    dispatcher.add_handler(MessageHandler(~(Filters.command & Filters.photo) & ~Filters.document,
+    dispatcher.add_handler(MessageHandler(~Filters.command & Filters.photo,
                                           partial(recognize_image, model=model, convector=convector)))
 
-    dispatcher.add_handler(MessageHandler(~(Filters.command & Filters.document),
+    dispatcher.add_handler(MessageHandler(~Filters.command & Filters.document,
                                           partial(recognize_document, model=model, convector=convector)))
 
     dispatcher.add_handler(CommandHandler('help', help))
