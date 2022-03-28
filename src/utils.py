@@ -3,22 +3,28 @@ import wandb
 from os.path import join
 
 
-def train_one_epoch(model, optimizer, criterion, epoch, step, traindata):
+def train_one_epoch(model, optimizer, criterion, epoch, step, traindata, grad_accum):
     device = next(model.parameters()).device
     model.train()
+    total_loss = 0
     for batch_num, (batch, labels) in enumerate(traindata):
         step += 1
         batch = batch.to(device)
         labels = labels.to(device)
 
-        optimizer.zero_grad()
         outputs = model(batch)
         loss = criterion(outputs, labels)
-
+        loss /= grad_accum
         loss.backward()
-        optimizer.step()
 
-        wandb.log({'loss': loss.item(), 'epoch': epoch + batch_num / len(traindata)}, step=step)
+        total_loss += loss.item()
+        if not step % grad_accum:
+            optimizer.step()
+            optimizer.zero_grad()
+
+            wandb.log({'loss': total_loss}, step=step)
+            total_loss = 0
+        wandb.log({'epoch': epoch + batch_num / len(traindata)}, step=step)
     return step
 
 

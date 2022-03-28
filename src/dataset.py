@@ -4,7 +4,8 @@ from torch.utils.data import Dataset
 from fastai.data.external import untar_data, URLs
 import csv
 from os.path import join
-from breed_convector import BreedConvector
+from src.breed_convector import BreedConvector
+
 
 def get_dataset(file_path, mode):
     with open(join(file_path, 'noisy_imagewoof.csv'), 'r') as f:
