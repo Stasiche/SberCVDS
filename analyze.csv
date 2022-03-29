@@ -1,0 +1,4 @@
+model_name,parameters_number(M),model_size(MB),accuracy,time(s),rps
+efficientnet_b5,28.4,114.4,0.9208,505.0,0.156
+efficientnet_b0,4.0,16.4,0.9397,162.0,0.488
+convnext_tiny,27.8,111.4,0.9478,314.0,0.252

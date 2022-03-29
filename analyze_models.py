@@ -19,10 +19,12 @@ val_dataset = ImageWoofDataset('val')
 valdata = DataLoader(val_dataset, batch_size=50, shuffle=False)
 os.makedirs('errors', exist_ok=True)
 
+runs_list = ['3h4ou7sh', '3bfpypi0', '116xetcy']
+
 with open('analyze.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(['model_name', 'parameters_number(M)', 'model_size(MB)', 'accuracy', 'time(s)', 'rps'])
-    for run_name in ['3bfpypi0', '3h4ou7sh']:
+    for run_name in runs_list:
         run = api.run(f'stasiche/SberCVDS/{run_name}')
         model = load_model(run)
         with stopwatch() as t:
