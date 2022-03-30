@@ -1,7 +1,0 @@
-efficientnet-pytorch~=0.7.1
-torch~=1.10.2
-Pillow~=9.0.1
-Flask~=2.0.3
-torchvision~=0.11.3
-wandb~=0.12.11
-fastai~=2.5.4
