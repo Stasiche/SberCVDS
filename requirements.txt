@@ -3,3 +3,4 @@ python-telegram-bot~=13.11
 torch==1.11.0+cpu
 Pillow~=9.0.1
 torchvision==0.12+cpu
+PyYAML~=6.0
