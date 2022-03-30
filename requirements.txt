@@ -1,6 +1,5 @@
-efficientnet-pytorch~=0.7.1
 python-telegram-bot~=13.11
-torch~=1.10.2
+torch~=1.11.0
 Pillow~=9.0.1
-torchvision~=0.11.3
-fastai~=2.5.4
+Flask~=2.0.3
+torchvision~=0.12
