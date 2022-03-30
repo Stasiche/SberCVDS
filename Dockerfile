@@ -7,7 +7,7 @@ RUN apt-get install python3.9 -y
 RUN apt-get install python3-pip -y
 RUN apt install python3.8-venv
 
-COPY requirements.txt boot.sh flask_main.py ./
+COPY requirements.txt boot.sh flask_main.py config.yaml ./
 COPY src src
 COPY static static
 RUN python3 -m venv venv
